@@ -1,0 +1,6 @@
+@MiniMart.API_HostAddress = http://localhost:5115
+
+GET {{MiniMart.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35913.81
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniMart.API", "MiniMart.API\MiniMart.API.csproj", "{81E07EF8-1832-A849-28EA-A56E1E4DAE98}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniMart.Domain", "MiniMart.Domain\MiniMart.Domain.csproj", "{5A5E90A0-8877-DD61-529F-4B5780635334}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniMart.Infrastructure", "MiniMart.Infrastructure\MiniMart.Infrastructure.csproj", "{543C6095-3405-DEF4-2628-63BBFE3B535A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniMart.Application", "MiniMart.Application\MiniMart.Application.csproj", "{D0F67440-EC6A-8B22-640E-43D514658820}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniMart.Common", "MiniMart.Common\MiniMart.Common.csproj", "{96E54A64-FE3C-BF1C-8FD5-CAD19C832749}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniMart.ConsoleApp", "MiniMart.ConsoleApp\MiniMart.ConsoleApp.csproj", "{B8C1095D-1CA5-49C8-ABF9-682D0ECDA169}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{81E07EF8-1832-A849-28EA-A56E1E4DAE98}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81E07EF8-1832-A849-28EA-A56E1E4DAE98}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81E07EF8-1832-A849-28EA-A56E1E4DAE98}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81E07EF8-1832-A849-28EA-A56E1E4DAE98}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5A5E90A0-8877-DD61-529F-4B5780635334}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A5E90A0-8877-DD61-529F-4B5780635334}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A5E90A0-8877-DD61-529F-4B5780635334}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5A5E90A0-8877-DD61-529F-4B5780635334}.Release|Any CPU.Build.0 = Release|Any CPU
+		{543C6095-3405-DEF4-2628-63BBFE3B535A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{543C6095-3405-DEF4-2628-63BBFE3B535A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{543C6095-3405-DEF4-2628-63BBFE3B535A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{543C6095-3405-DEF4-2628-63BBFE3B535A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0F67440-EC6A-8B22-640E-43D514658820}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0F67440-EC6A-8B22-640E-43D514658820}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0F67440-EC6A-8B22-640E-43D514658820}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0F67440-EC6A-8B22-640E-43D514658820}.Release|Any CPU.Build.0 = Release|Any CPU
+		{96E54A64-FE3C-BF1C-8FD5-CAD19C832749}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{96E54A64-FE3C-BF1C-8FD5-CAD19C832749}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{96E54A64-FE3C-BF1C-8FD5-CAD19C832749}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{96E54A64-FE3C-BF1C-8FD5-CAD19C832749}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8C1095D-1CA5-49C8-ABF9-682D0ECDA169}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8C1095D-1CA5-49C8-ABF9-682D0ECDA169}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8C1095D-1CA5-49C8-ABF9-682D0ECDA169}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8C1095D-1CA5-49C8-ABF9-682D0ECDA169}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {385618F8-DBD6-49F7-A58E-C242F9D0D3ED}
+	EndGlobalSection
+EndGlobal

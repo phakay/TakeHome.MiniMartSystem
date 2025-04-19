@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MiniMart.Application\MiniMart.Application.csproj" />
+    <ProjectReference Include="..\MiniMart.Domain\MiniMart.Domain.csproj" />
+  </ItemGroup>
+
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Entityframeworkcore" Version="9.0.1" />
+		<PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
+		<PackageReference Include="Microsoft.Entityframeworkcore.Sqlserver" Version="9.0.1" />
+		<!--<PackageReference Include="Microsoft.Entityframeworkcore.Sqlite" Version="9.0.1" />-->
+		<PackageReference Include="Microsoft.Entityframeworkcore.Tools" Version="9.0.1" />
+	</ItemGroup>
+</Project>
