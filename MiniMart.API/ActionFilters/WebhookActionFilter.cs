@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.Net.Http.Headers;
 
 namespace MiniMart.API.ActionFilters
 {

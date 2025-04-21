@@ -1,6 +1,4 @@
-﻿using MiniMart.Application.Contracts;
-using MiniMart.Application.Models;
-using MiniMart.Common;
+﻿using MiniMart.Application.Models;
 
 namespace MiniMart.Infrastructure.Services
 {

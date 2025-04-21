@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Net;
+using Microsoft.AspNetCore.Mvc;
 using MiniMart.API.ActionFilters;
 using MiniMart.Application.Contracts;
 using MiniMart.Application.Models;
@@ -7,7 +8,7 @@ namespace MiniMart.API.Controllers
 {
     [ApiController]
     [Route("api/webhook")]
-    public class WebhookController : ControllerBase
+    public class WebhookController : BaseController
     {
         private readonly ILogger<WebhookController> _logger;
         private readonly IWebhookService _webhookService;
@@ -31,7 +32,7 @@ namespace MiniMart.API.Controllers
 
             await _webhookService.ProcessWebhookTransaction(req);
 
-            return Ok(new WebhookResponse { Message = "Processed Payload" });
+            return CreateCustomResult(HttpStatusCode.OK, new WebhookResponse { Message = "Processed Payload" });
         }
     }
 }

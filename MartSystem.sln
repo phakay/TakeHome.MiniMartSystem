@@ -11,8 +11,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniMart.Infrastructure", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniMart.Application", "MiniMart.Application\MiniMart.Application.csproj", "{D0F67440-EC6A-8B22-640E-43D514658820}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniMart.Common", "MiniMart.Common\MiniMart.Common.csproj", "{96E54A64-FE3C-BF1C-8FD5-CAD19C832749}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniMart.ConsoleApp", "MiniMart.ConsoleApp\MiniMart.ConsoleApp.csproj", "{B8C1095D-1CA5-49C8-ABF9-682D0ECDA169}"
 EndProject
 Global
@@ -37,10 +35,6 @@ Global
 		{D0F67440-EC6A-8B22-640E-43D514658820}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D0F67440-EC6A-8B22-640E-43D514658820}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D0F67440-EC6A-8B22-640E-43D514658820}.Release|Any CPU.Build.0 = Release|Any CPU
-		{96E54A64-FE3C-BF1C-8FD5-CAD19C832749}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{96E54A64-FE3C-BF1C-8FD5-CAD19C832749}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{96E54A64-FE3C-BF1C-8FD5-CAD19C832749}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{96E54A64-FE3C-BF1C-8FD5-CAD19C832749}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B8C1095D-1CA5-49C8-ABF9-682D0ECDA169}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B8C1095D-1CA5-49C8-ABF9-682D0ECDA169}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B8C1095D-1CA5-49C8-ABF9-682D0ECDA169}.Release|Any CPU.ActiveCfg = Release|Any CPU

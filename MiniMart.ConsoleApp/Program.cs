@@ -1,6 +1,6 @@
 ﻿using MiniMart.Application.Models;
-using MiniMart.Common;
 using MiniMart.Domain.Models;
+using MiniMart.Infrastructure.Services;
 
 public class Program
 {
@@ -60,7 +60,6 @@ public class Program
 
     private static void CheckPaymentStatus()
     {
-        // Checking payment status
         if (string.IsNullOrEmpty(_lastPaymentRef))
         {
             Console.WriteLine("No record found");
@@ -91,26 +90,25 @@ public class Program
         if (reconfirmResponse.Staus == TransactionStatus.Pending)
         {
             Console.WriteLine("Payment is still not confirmed");
-            return;
         }
     }
 
     /// <summary>
     /// Method ensures a valid selection is made. 
     /// Either a valid selection is made or the system continues to prompt for a selection. 
-    /// The loop can be broken by fulfilling the conditoin for the <paramref name="isBreakOutCondition"/> 
+    /// The loop can be broken by fulfilling the condition for the <paramref name="isBreakOutCondition"/> 
     /// </summary>
     /// <param name="msg"></param>
     /// <param name="validatorFunc"></param>
     /// <param name="isBreakOutCondition"></param>
+    /// <param name="breakOutKey"></param>
     /// <returns></returns>
     private static (string result, bool isBreakOut) InputProcessor(
         string msg,
         Func<string, (bool isValid, string? errorMsg)> validatorFunc, 
         Predicate<string>? isBreakOutCondition = null, string breakOutKey = "exit")
     {
-        if (isBreakOutCondition == null)
-            isBreakOutCondition = i => string.Equals(i.Trim(), breakOutKey, StringComparison.OrdinalIgnoreCase);
+        isBreakOutCondition ??= i => string.Equals(i.Trim(), breakOutKey, StringComparison.OrdinalIgnoreCase);
 
         while (true)
         {
@@ -162,7 +160,7 @@ public class Program
                 if (string.IsNullOrEmpty(i) || !int.TryParse(i, out var value))
                     return (false, string.Empty);
 
-                if (!_goods.Any(x => x.ProductId == value))
+                if (_goods.All(x => x.ProductId != value))
                     return (false, "Item ID is not in the list");
                 return (true, i);
             });
@@ -238,9 +236,9 @@ public class Program
         var orderData = new PurchaseRequest { CustomerId = userId, LineItems = orderItems, TotalAmount = totalAmount };
         var result = ApiService.MakeOrder(orderData);
 
-        if (!result.IsSuccessful)
+        if (result is null)
         {
-            Console.WriteLine(result.Message);
+            Console.WriteLine("\nFailed to create order");
             return;
         }
 
@@ -254,7 +252,7 @@ public class Program
         Console.WriteLine("Expires " + result.ExpiryTime.ToString("yyyy-MM-dd hh:mm:ss"));
        
         Console.WriteLine("\nConfirming Pay with Transfer Status...");
-        // polls the api for 30sec
+        // polls the api for 15sec
         int retryCount = 3;
         do
         {
@@ -267,16 +265,15 @@ public class Program
                 Console.WriteLine("Order Complete");
                 break;
             }
-            else if (reconfirmResponse.Staus == TransactionStatus.Failed)
+
+            if (reconfirmResponse.Staus == TransactionStatus.Failed)
             {
                 Console.WriteLine("Order Failed");
                 break;
             }
-            else
-            {
-                // back off and retry
-                Task.Delay(5000).Wait();
-            }
+            
+            // back off and retry
+            Task.Delay(5000).Wait();
         } while (--retryCount > 0);
 
         if (retryCount == 0)
@@ -302,23 +299,40 @@ public class Program
     }
 }
 
-
 public class ApiService(HttpClient httpClient) : BaseApiClient(httpClient)
 {
     private const string BaseUrl = "https://localhost:7222/api/";
     
     public List<ProductInventoryResponse> GetGoods()
     {
-        return GetAsync<List<ProductInventoryResponse>>($"{BaseUrl}inventory/getavailableproducts").Result;
+        var response = GetAsync<ApiResponse<List<ProductInventoryResponse>>>($"{BaseUrl}inventory/getavailableproducts").Result;
+        if (response is { IsSuccessful: true, Data: not null })
+        {
+            return response.Data;
+        }
+        Console.WriteLine("\nGet Goods Failed. Please try again later. Error: " + response.ErrorMessage);
+        return [];
     }
 
-    public PurchaseResponse MakeOrder(PurchaseRequest request)
+    public PurchaseResponse? MakeOrder(PurchaseRequest request)
     {
-        return PostAsync<PurchaseResponse>($"{BaseUrl}purchases/makeorder", request).Result;
+        var response = PostAsync<ApiResponse<PurchaseResponse>>($"{BaseUrl}purchases/makeorder", request).Result;
+        if (response is { IsSuccessful: true, Data: not null })
+        {
+            return response.Data;
+        }
+        Console.WriteLine("\nMakeOrder failed. Please try again later. Error: " + response.ErrorMessage);
+        return null;
     }
 
-    public PurchaseOrderStatusResponse VerifyPurchaseStatus(string refId)
+    public PurchaseOrderStatusResponse? VerifyPurchaseStatus(string refId)
     {
-        return GetAsync<PurchaseOrderStatusResponse>($"{BaseUrl}purchases/verifyorderstatus/{refId}").Result;
+        var response =  GetAsync<ApiResponse<PurchaseOrderStatusResponse>>($"{BaseUrl}purchases/verifyorderstatus/{refId}").Result;
+        if (response is { IsSuccessful: true, Data: not null })
+        {
+            return response.Data;
+        }
+        Console.WriteLine("\nVerify Purchase Status failed. Please try again later. Error: " + response.ErrorMessage);
+        return null;
     }
 }
