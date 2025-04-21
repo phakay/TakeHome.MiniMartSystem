@@ -1,4 +1,6 @@
-﻿namespace MiniMart.Application.Models
+﻿using MiniMart.Domain.Models;
+
+namespace MiniMart.Application.Models
 {
     public class ProductCreateRequest
     {
@@ -37,6 +39,7 @@
     public class PurchaseOrderStatusResponse
     {
         public bool isSuccessful { get; set; }
+        public TransactionStatus Staus { get; set; }
         public string Message { get; set; }
     }
     public class PurchaseRequest
@@ -56,29 +59,32 @@
     {
         public bool IsSuccessful { get; set; }
         public string Message { get; set; }
+        public string BankName { get; set; }
         public string AccountNumber { get; set; }
         public string CurrencyCode { get; set; }
         public decimal Amount { get; set; }
-        public string TransactionReference { get; set; }
+        public string TrackingReference { get; set; }
+        public DateTime ExpiryTime { get; internal set; }
     }
 
     public class PaymentRequest
     {
-        public string TransactionReference { get; set; }
         public string PaymentMethod { get; set; } = string.Empty;
         public string CustomerId { get; set; }
-        public string MerchantId { get; set; }
         public decimal Amount { get; set; }
     }
 
     public class PaymentResponse
     {
-        public string TransactionReference { get; set; }
-        public bool IsSuccess { get; set; }
+        public string TrackingReference { get; set; }
+        public bool IsSuccessful { get; set; }
         public string AccountNumber { get; set; }
-        public string ExpiryTime { get; set; }
+        public DateTime ExpiryTime { get; set; }
         public string CurrencyCode { get; set; }
         public decimal Amount { get; set; }
+        public string BankName { get; set; }
+        public string AccountName { get; set; }
+        public string ErrorMessage { get; set; }
     }
 
     public class PurchaseOrderResponse
@@ -97,10 +103,10 @@
 
     public class QueryTransactionResponse
     {
-        public bool isSuccessful { get; set; }
-        public bool isFailed { get; set; }
-        public bool isPending { get; set; }
-        public string message { get; set; }
+        public bool IsSuccessful { get; set; }
+        public string ErrorMessage { get; set; }
+        public decimal AmountProcessed { get; set; }
+        public bool ShouldRequery { get; set; }
     }
 
     public class WebhookRequest

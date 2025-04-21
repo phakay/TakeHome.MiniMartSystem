@@ -1,8 +1,7 @@
 ﻿using System.Text;
 using System.Text.Json;
-using MiniMart.Application.Models;
 
-namespace MiniMart.Infrastructure.Services
+namespace MiniMart.Common
 {
     public abstract class BaseApiClient
     {

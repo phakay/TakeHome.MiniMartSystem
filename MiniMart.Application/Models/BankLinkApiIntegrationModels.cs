@@ -38,8 +38,8 @@ namespace MiniMart.Application.Models
         public string SessionId { get; set; }
         public string Terminal { get; set; }
         public string Description { get; set; }
-        public float PaidAmount { get; set; }
-        public DateTime PaymentDate { get; set; }
+        public decimal PaidAmount { get; set; }
+        public string PaymentDate { get; set; }
 
         public class Responseheader
         {
@@ -81,7 +81,7 @@ namespace MiniMart.Application.Models
         {
             public string ResponseCode { get; set; }
             public string ResponseMessage { get; set; }
-            public string traceId { get; set; }
+            public string TraceId { get; set; }
         }
     }
 

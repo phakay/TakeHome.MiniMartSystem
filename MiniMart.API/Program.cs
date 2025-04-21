@@ -36,7 +36,7 @@ builder.Services.AddHostedService<InventoryStockLevelMonitorService>();
 builder.Services.AddHostedService<StockReconcilationService>();
 builder.Services.AddHostedService<TransactionQueryProcessorService>();
 
-builder.Services.AddHttpClient<BankLinkService>();
+builder.Services.AddHttpClient<BankLinkService>(conf => conf.DefaultRequestHeaders.Add("Authorization", "Bearer eyJhbGciOiJodHRwOi8vd3d3LnczLm9yZy8yMDAxLzA0L3htbGRzaWctbW9yZSNobWFjLXNoYTUxMiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3MTNhZjkyNi1mY2JhLTRlNTYtOGU3My1lM2U5MDEzNDA5YzgiLCJNZXJjaGFudElkIjoiQ2h1a3MxMiIsImV4cCI6MTc3NjM5NDM2MywiaXNzIjoiaHR0cHM6Ly9jb3JhbHBheS5jb20iLCJhdWQiOiJodHRwczovL2NvcmFscGF5LmNvbSJ9.2vh4LBfC5-e5d6TZ3UOtcTwdjTI3l8QzqLEvMeo0J0Jz3Nb4OWwAIHiO8YeTiG49Knob1pmJuY_Gl7fy1VSNvQ"));
 
 
 var app = builder.Build();

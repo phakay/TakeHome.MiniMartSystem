@@ -36,7 +36,7 @@ namespace MiniMart.Infrastructure.Services
                 if (paymentSvc is null) throw new ApplicationException("Unable to reslove instance for type: " + typeof(IExternalGatewayPaymentService));
 
                 var pendingTsqs = ctx.TransactionQueryLogs.Where(x => x.Status == TransactionStatus.Pending &&
-                     DateTime.Now > x.LogDate.AddSeconds(requeryIntervalSinceLogDate)).ToArray();
+                     DateTime.Now > x.LogDate.AddSeconds(requeryIntervalSinceLogDate) && x.RetryCount < maxRetryCount).ToArray();
 
                 var refs = pendingTsqs.Select(x => x.RefId).ToArray();
 
@@ -48,41 +48,41 @@ namespace MiniMart.Infrastructure.Services
                     {
                         tsqRecord.LastChecked = DateTime.Now;
 
-                        if (tsqRecord.RetryCount > maxRetryCount)
-                        {
-                            tsqRecord.StatusMessage = "retry limit exceeded";
-                            tsqRecord.Status = TransactionStatus.Failed;
-                            refsAndStatusToResolve.Add(tsqRecord.RefId, false);
-                            continue;
-                        }
-
                         // make gtw call to requery
                         var request = new QueryTransactionRequest
                         {
-                            TransactionId = tsqRecord.RefId
+                            TransactionId = tsqRecord.RefId,
                         };
 
                         var response = paymentSvc.QueryTransactionStatusAsync(request).Result;
+
+                        tsqRecord.RetryCount++;
                         if (response is null)
                         {
                             _logger.LogError("Response is null for refID: {RefId}", tsqRecord.RefId);
+                            if (tsqRecord.RetryCount > maxRetryCount)
+                            {
+                                tsqRecord.StatusMessage = "Retry limit exceeded";
+                            }
                             continue;
                         }
 
-                        // handle result from gtw
-                        if (response.isSuccessful)
+                        // handle result from gtw after requery
+                        if (response.IsSuccessful)
                         {
                             tsqRecord.Status = TransactionStatus.Processed;
                             refsAndStatusToResolve.Add(tsqRecord.RefId, true);
-
                         }
-                        else if (response.isFailed) 
+                        else
                         { 
-                            tsqRecord.Status = TransactionStatus.Failed;
+                            tsqRecord.Status = response.ShouldRequery ? TransactionStatus.Pending : TransactionStatus.Failed;
+                            tsqRecord.StatusMessage = response.ErrorMessage;
                         }
 
-                        tsqRecord.StatusMessage = response.message;
-                        tsqRecord.RetryCount++;
+                        if (tsqRecord.Status == TransactionStatus.Failed)
+                        {
+                            refsAndStatusToResolve.Add(tsqRecord.RefId, false);
+                        }
                     }
                     catch (Exception ex)
                     {

@@ -36,7 +36,7 @@ namespace MiniMart.API.Controllers
             return Ok(_mapper.Map<IEnumerable<PurchaseOrderResponse>>(response));
         }
 
-        [HttpGet("verify/{referenceId}")]
+        [HttpGet("verifyorderstatus/{referenceId}")]
         public async Task<IActionResult> Verify(string referenceId)
         {
             var response = await _purchaseOrderService.VerifyOrderStatusAsync(referenceId);

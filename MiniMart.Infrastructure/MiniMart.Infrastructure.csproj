@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MiniMart.Application\MiniMart.Application.csproj" />
+    <ProjectReference Include="..\MiniMart.Common\MiniMart.Common.csproj" />
     <ProjectReference Include="..\MiniMart.Domain\MiniMart.Domain.csproj" />
   </ItemGroup>
 

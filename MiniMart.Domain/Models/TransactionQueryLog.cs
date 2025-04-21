@@ -8,5 +8,6 @@
         public DateTime? LastChecked { get; set; }
         public DateTime LogDate { get; set; }
         public int RetryCount { get; set; }
+        public decimal Amount { get; set; }
     }
 }

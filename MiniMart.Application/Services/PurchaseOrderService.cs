@@ -32,7 +32,7 @@ namespace MiniMart.Application.Services
             MergeLineItems(request);
 
             decimal totalAmount = 0;
-            List<(ProductInventory, int)> quantityToDeductTracker = new();
+            List<(ProductInventory prodInv, int qty)> quantityToDeductTracker = new();
 
             foreach (var lineItem in request.LineItems)
             {
@@ -57,54 +57,58 @@ namespace MiniMart.Application.Services
             if (totalAmount != request.TotalAmount)
                 return new PurchaseResponse { IsSuccessful = false, Message = $"Total amount calcuated must match total amount in request. Amount: {totalAmount}, request amount: {request.TotalAmount}" };
 
-            var trxRef = Guid.NewGuid().ToString();
+            var paymentRequest = new PaymentRequest
+            {
+                CustomerId = request.CustomerId,
+                PaymentMethod = "Paywith transfer",
+                Amount = totalAmount
+            };
+
+            var paymentResponse = await _paymentService.ProcessPaymentAsync(paymentRequest);
+
+            if (!paymentResponse.IsSuccessful)
+                return new PurchaseResponse { IsSuccessful = false, Message = paymentResponse.ErrorMessage };
+
+            if (paymentResponse.TrackingReference is null)
+                return new PurchaseResponse { IsSuccessful = false, Message = "Something went wrong. pls try again" };
+
+            if (paymentRequest.Amount != paymentResponse.Amount)
+                return new PurchaseResponse { IsSuccessful = false, Message = "Amount mismatch error" };
+
             var purchaseOrder = new PurchaseOrder
             {
                 Amount = totalAmount,
                 CustomerId = request.CustomerId,
                 Date = DateTime.Now,
                 OrderStatus = PurchaseStatus.Pending,
-                TransactionReference = trxRef,
+                TransactionReference = paymentResponse.TrackingReference,
                 OrderData = JsonSerializer.Serialize(request)
             };
 
-            await _purchaseOrderRepository.AddAsync(purchaseOrder);
-
             quantityToDeductTracker.ForEach(x => x.Item1.Quantity -= x.Item2);
-
-            var paymentRequest = new PaymentRequest
-            {
-                TransactionReference = trxRef,
-                CustomerId = request.CustomerId,
-                PaymentMethod = "Paywith transfer",
-                MerchantId = "MerchantId",
-                Amount = totalAmount
-            };
-
-            var paymentResponse = await _paymentService.ProcessPaymentAsync(paymentRequest);
-
-            if (!paymentResponse.IsSuccess)
-                return new PurchaseResponse { IsSuccessful = false, Message = "Unable to process payment method" };
 
             var trxQuery = new TransactionQueryLog
             {
                 LogDate = DateTime.Now,
-                RefId = trxRef,
-                Status = TransactionStatus.Pending
+                RefId = paymentResponse.TrackingReference,
+                Status = TransactionStatus.Pending,
+                Amount = totalAmount
             };
 
+            await _purchaseOrderRepository.AddAsync(purchaseOrder);
             await _tsqLogRepository.AddAsync(trxQuery);
-
             await _unitOfWork.SaveChangesAsync();
 
             PurchaseResponse response = new PurchaseResponse
             {
-                IsSuccessful = paymentResponse.IsSuccess,
+                IsSuccessful = paymentResponse.IsSuccessful,
+                BankName = paymentResponse.BankName,
                 AccountNumber = paymentResponse.AccountNumber,
                 Amount = totalAmount,
                 CurrencyCode = paymentResponse.CurrencyCode,
                 Message = "Pay into this account",
-                TransactionReference = trxRef
+                TrackingReference = paymentResponse.TrackingReference,
+                ExpiryTime = paymentResponse.ExpiryTime
             };
 
             return response;
@@ -122,9 +126,9 @@ namespace MiniMart.Application.Services
 
             return order.OrderStatus switch
             {
-                PurchaseStatus.Success => new PurchaseOrderStatusResponse() { isSuccessful = true, Message = "Purchase Order Processed Successfully" },
-                PurchaseStatus.Pending => new PurchaseOrderStatusResponse() { isSuccessful = false, Message = nameof(PurchaseStatus.Pending) },
-                _ => new PurchaseOrderStatusResponse() { isSuccessful = false, Message = nameof(PurchaseStatus.Failed) }
+                PurchaseStatus.Success => new PurchaseOrderStatusResponse() { isSuccessful = true, Message = "Purchase Order Processed Successfully", Staus = TransactionStatus.Processed },
+                PurchaseStatus.Pending => new PurchaseOrderStatusResponse() { isSuccessful = false, Message = nameof(PurchaseStatus.Pending), Staus = TransactionStatus.Pending },
+                _ => new PurchaseOrderStatusResponse() { isSuccessful = false, Message = nameof(PurchaseStatus.Failed), Staus = TransactionStatus.Failed }
             };
         }
 
