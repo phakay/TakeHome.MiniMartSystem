@@ -121,7 +121,7 @@ namespace MiniMart.Application.Services
 
         public async Task<PurchaseOrderStatusResponse?> VerifyOrderStatusAsync(string referenceId)
         {
-            var order = await _purchaseOrderRepository.GetByReferenceId(referenceId);
+            var order = await _purchaseOrderRepository.GetByReferenceIdAsync(referenceId);
             if (order == null) return null;
 
             return order.OrderStatus switch
@@ -143,13 +143,20 @@ namespace MiniMart.Application.Services
 
         public async Task ProcessOrderTransactionStatus(string refId, bool isSuccessful)
         {
-            var order = await _purchaseOrderRepository.GetByReferenceId(refId);
+            var order = await _purchaseOrderRepository.GetByReferenceIdAsync(refId);
 
             if (order is null) throw new ApplicationException($"Order with refId '{refId}' could not be found");
 
             if (order.OrderStatus != PurchaseStatus.Pending) return;
 
-            order.OrderStatus = isSuccessful ? PurchaseStatus.Success : PurchaseStatus.Failed;   
+            order.OrderStatus = isSuccessful ? PurchaseStatus.Success : PurchaseStatus.Failed;
+
+            var tsq = await _tsqLogRepository.GetByReferenceIdAsync(refId);
+            if (tsq is not null && tsq.Status == TransactionStatus.Pending)
+            {
+                tsq.Status = isSuccessful ? TransactionStatus.Processed : TransactionStatus.Failed;
+                tsq.StatusMessage = "Updated by Webhook";
+            }
 
             await _unitOfWork.SaveChangesAsync();
         }

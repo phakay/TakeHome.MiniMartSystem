@@ -1,18 +1,17 @@
-﻿
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-using MiniMart.Application.Models;
+﻿using MiniMart.Application.Models;
+using MiniMart.Common;
+using MiniMart.Domain.Models;
 
 public class Program
 {
-    private static HttpClient _httpClient = new HttpClient();
-    private static JsonSerializerOptions jsonOption => new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
-    private static List<ProductResponse> _goods = new();
+    private static readonly ApiService ApiService = new (new HttpClient());
+    private static List<ProductInventoryResponse> _goods = new();
     private static string _lastPaymentRef = string.Empty;
+    
     public static void Main()
     {
-        while (true)
+        var shouldExit = false;
+        while (!shouldExit)
         {
             Console.WriteLine("\nMini Mart Console App");
             Console.WriteLine("1. View Available Goods");
@@ -21,23 +20,26 @@ public class Program
             Console.WriteLine("4. Exit");
             Console.WriteLine();
 
+            Console.WriteLine("Input a number from the option list to access the menu");
             var input = Console.ReadLine();
-            Console.WriteLine();
+
             try
             {
                 switch (input)
                 {
                     case "1":
-                        ViewGoods();
-                        break;
+                        Console.WriteLine("=== View Available Goods ===");
+                        ViewGoods(); break;
                     case "2":
-                        PurchaseGoods();
-                        break;
+                        Console.WriteLine("=== Purchase Goods ===");
+                        PurchaseGoods(); break;
                     case "3":
-                        CheckPaymentStatus();
-                        break;
+                        Console.WriteLine("=== Check Payment Status ===");
+                        CheckPaymentStatus(); break;
                     case "4":
-                        return;
+                        Console.WriteLine("Exiting...");
+                        shouldExit = true;
+                        break;
                     default:
                         Console.WriteLine("Invalid option selection. Try again.");
                         break;
@@ -48,123 +50,229 @@ public class Program
                 Console.WriteLine("An error occurred. Please Try again");
                 Console.WriteLine("Error Message: " + ex.Message);
             }
+            finally
+            {
+                Console.WriteLine("Press any key to continue");
+                Console.ReadKey();
+            }
         }
     }
 
     private static void CheckPaymentStatus()
     {
         // Checking payment status
-        Console.WriteLine("Checking for trxRef: " + _lastPaymentRef);
-        var reconfirmResponse = _httpClient.GetStringAsync(Constants.ApiUrl + $"purchases/verify/{_lastPaymentRef}").Result;
-        var dataResponse = JsonSerializer.Deserialize<OrderStatusResponse>(reconfirmResponse, jsonOption);
-        if (dataResponse is not null && dataResponse.isSuccessful)
+        if (string.IsNullOrEmpty(_lastPaymentRef))
+        {
+            Console.WriteLine("No record found");
+            return;
+        }
+
+        Console.WriteLine("Checking for transaction Reference: " + _lastPaymentRef);
+        var reconfirmResponse = ApiService.VerifyPurchaseStatus(_lastPaymentRef);
+
+        if (reconfirmResponse is null)
+        {
+            Console.WriteLine("An error occurred...");
+            return;
+        }
+
+        if (reconfirmResponse.isSuccessful)
         {
             Console.WriteLine("Payment Successful");
+            return;
         }
-        else
+
+        if (reconfirmResponse.Staus == TransactionStatus.Failed)
+        {
+            Console.WriteLine("Order Failed");
+            return;
+        }
+
+        if (reconfirmResponse.Staus == TransactionStatus.Pending)
         {
             Console.WriteLine("Payment is still not confirmed");
+            return;
         }
     }
 
-    private static void PurchaseGoods()
+    /// <summary>
+    /// Method ensures a valid selection is made. 
+    /// Either a valid selection is made or the system continues to prompt for a selection. 
+    /// The loop can be broken by fulfilling the conditoin for the <paramref name="isBreakOutCondition"/> 
+    /// </summary>
+    /// <param name="msg"></param>
+    /// <param name="validatorFunc"></param>
+    /// <param name="isBreakOutCondition"></param>
+    /// <returns></returns>
+    private static (string result, bool isBreakOut) InputProcessor(
+        string msg,
+        Func<string, (bool isValid, string? errorMsg)> validatorFunc, 
+        Predicate<string>? isBreakOutCondition = null, string breakOutKey = "exit")
     {
-        var hashedGoods = _goods.ToDictionary(x => x.Id);
-        Console.WriteLine("Enter Customer Name");
-        var userId = Console.ReadLine();
-        var orderItems = new List<PurchaseItem>();
+        if (isBreakOutCondition == null)
+            isBreakOutCondition = i => string.Equals(i.Trim(), breakOutKey, StringComparison.OrdinalIgnoreCase);
+
         while (true)
         {
-            Console.WriteLine("Enter Item ID");
-            Console.WriteLine("Type 'main' at anytime to go back to main menu");
-            Console.WriteLine("Type 'done' after completing the entries");
+            Console.WriteLine(msg);
             var input = Console.ReadLine();
-            if (input == "done") break;
-            if (input == "main") return;
+            if (input is null) continue;
 
-            if (!int.TryParse(input, out var itemId))
+            if (isBreakOutCondition(input))
             {
-                Console.WriteLine("Invalid Item ID");
-                continue;
+                return (string.Empty, true);
             }
 
-            if (!_goods.Any(x => x.Id == itemId))
+            var valResult = validatorFunc(input);
+            if (valResult.isValid)
             {
-                Console.WriteLine("Item ID is not in the list");
-                continue;
+                return (input, false);
             }
 
-            int itemQty = 0;
-            while (true)
-            {
-                Console.WriteLine("Type 'main' at anytime to go back to main menu");
-                Console.WriteLine("Type 'done' after completing the entries");
-                Console.WriteLine("Enter Quantity");
-                var qtyInput = Console.ReadLine();
-                if (qtyInput == "done") break;
-                if (qtyInput == "main") return;
-                if (int.TryParse(qtyInput, out var qty))
-                {
-                    if (qty > hashedGoods[itemId].Quantity)
-                    {
-                        Console.WriteLine("Insufficient Quantity");
-                        continue;
-                    }
-                    else
-                    {
-                        itemQty = qty;
-                        hashedGoods[itemId].Quantity -= qty;
-                        break;
-                    }
-                }
-                Console.WriteLine("Invalid Qty Input");
-            }
+            if (!string.IsNullOrEmpty(valResult.errorMsg))
+                Console.WriteLine("Invalid input. Try again." + valResult.Item2);
+            else
+                Console.WriteLine("Invalid input. Try again.");
 
-            if (itemQty > 0)
-            {
-                orderItems.Add(new PurchaseItem() { ProductId = itemId, Quantity = itemQty });
-            }
+            Console.WriteLine($"Type '{breakOutKey}' to exit at any time");
+        }
+    }
+    
+    private static void PurchaseGoods()
+    {
+        if (_goods.Count == 0)
+        {
+            Console.WriteLine("No Available goods to purchase at the moment. Try selecting option 1 to View the available goods");
+            return;
         }
 
-        if (orderItems.Count == 0) return;
+        var goods = _goods.ToDictionary(x => x.ProductId);
+        var userIdInput = InputProcessor("Enter you name", i => !string.IsNullOrEmpty(i) ? (true, null) : (false, string.Empty));
+        if (userIdInput.isBreakOut) return;
+        var userId = userIdInput.result;
+        
+        var orderItems = new List<PurchaseItem>();
+        Console.WriteLine("\nBegin Selecting an item from the list");
 
+        bool shouldAddMoreItems = true;
+        while (shouldAddMoreItems)
+        {
+            var itemIdInput = InputProcessor("\nEnter Item ID", i =>
+            {
+                if (string.IsNullOrEmpty(i) || !int.TryParse(i, out var value))
+                    return (false, string.Empty);
 
-        Console.WriteLine("See Order...");
+                if (!_goods.Any(x => x.ProductId == value))
+                    return (false, "Item ID is not in the list");
+                return (true, i);
+            });
 
-        decimal total = 0;
+            if (itemIdInput.isBreakOut) return;
+            var itemId = int.Parse(itemIdInput.result);
+
+            var itemQtyInput = InputProcessor("\nEnter Quantity", i =>
+            {
+                if (string.IsNullOrEmpty(i) || !int.TryParse(i, out var qty))
+                    return (false, string.Empty);
+
+                if (qty > goods[itemId].Quantity)
+                    return (false, "\nItem stock is not sufficient for the input quantity. " +
+                                   $"Remaining stock is '{goods[itemId].Quantity}'");
+
+                goods[itemId].Quantity -= qty;
+                return (true, i);
+            });
+            if (itemQtyInput.isBreakOut) return;
+            var qty = int.Parse(itemQtyInput.result);
+
+            orderItems.Add(new PurchaseItem { ProductId = itemId, Quantity = qty });
+
+            Console.WriteLine("\nItem Added to your order list");
+
+            var toContinueInput = InputProcessor("\nDo you want to add more items to your order list? (yes or no)", i =>
+            {
+                if (string.IsNullOrEmpty(i))
+                    return (false, string.Empty);
+
+                if (!string.Equals(i, "yes", StringComparison.OrdinalIgnoreCase) && !string.Equals(i, "no", StringComparison.OrdinalIgnoreCase))
+                    return (false, "Either 'yes' or 'no' is allowed.");
+
+                return (true, null);
+            });
+            if (toContinueInput.isBreakOut) return;
+            var toContinue = toContinueInput.result.ToLower();
+
+            if (toContinue == "yes") shouldAddMoreItems = true;
+            if (toContinue == "no") shouldAddMoreItems = false;
+        }
+        
+        if (orderItems.Count == 0)
+        {
+            Console.WriteLine("\nNo item added to your Order");
+            return;
+        }
+
+        Console.WriteLine("\n========================================= Your Order List  =======================================");
+
+        decimal totalAmount = 0;
         foreach (var order in orderItems)
         {
-            var product = hashedGoods[order.ProductId];
+            var product = goods[order.ProductId];
             Console.WriteLine($"ID: {order.ProductId} | Name: {product.Name} | Unit Price: {product.Price} | Qty {order.Quantity} | Total Price: {order.Quantity * product.Price}");
-            total += order.Quantity * product.Price;
+            totalAmount += order.Quantity * product.Price;
+        }
+        Console.WriteLine("Total amount: " + totalAmount);
+
+        var toSendOrderInput = InputProcessor("\nDo you want to send order and initiate payment. (yes or no. 'no' will take you back to main menu)", i =>
+        {
+            if (string.IsNullOrEmpty(i))
+                return (false, string.Empty);
+
+            if (!string.Equals(i, "yes", StringComparison.OrdinalIgnoreCase) && !string.Equals(i, "no", StringComparison.OrdinalIgnoreCase))
+                return (false, "Either 'yes' or 'no' is allowed.");
+
+            return (true, null);
+        });
+
+        var toSendOrder = toSendOrderInput.result.ToLower();
+        if (toSendOrder == "no") return;
+
+        // call purchase endpoint
+        var orderData = new PurchaseRequest { CustomerId = userId, LineItems = orderItems, TotalAmount = totalAmount };
+        var result = ApiService.MakeOrder(orderData);
+
+        if (!result.IsSuccessful)
+        {
+            Console.WriteLine(result.Message);
+            return;
         }
 
-        Console.WriteLine("Total amount: " + total);
+        _lastPaymentRef = result.TrackingReference;
 
-        Console.ReadKey();
-
-        var orderData = new PurchaseRequest { CustomerId = userId, LineItems = orderItems };
-        var jsonContent = new StringContent(JsonSerializer.Serialize(orderData), Encoding.UTF8, "application/json");
-
-        // call purchase api
-        var response = _httpClient.PostAsync(Constants.ApiUrl + "purchases/makeorder", jsonContent).Result;
-        var result = JsonSerializer.Deserialize<PurchaseResponse>(response.Content.ReadAsStringAsync().Result, jsonOption);
-        _lastPaymentRef = result.TransactionReference;
-
-        Console.WriteLine("Account details: " + result.AccountNumber);
+        Console.WriteLine("\nAccount details to pay into. Please pay the exact amount into the account before the account expires");
+        Console.WriteLine("Bank Name: " + result.BankName);
+        Console.WriteLine("Account No: " + result.AccountNumber);
         Console.WriteLine("Amount: " + result.Amount);
         Console.WriteLine("Currency: " + result.CurrencyCode);
-        
-        // polls for 30sec
+        Console.WriteLine("Expires " + result.ExpiryTime.ToString("yyyy-MM-dd hh:mm:ss"));
+       
+        Console.WriteLine("\nConfirming Pay with Transfer Status...");
+        // polls the api for 30sec
         int retryCount = 3;
         do
         {
             // awaiting confirmation...
-            var reconfirmResponse = _httpClient.GetStringAsync(Constants.ApiUrl + $"purchases/verify/{result.TransactionReference}").Result;
-            var dataResponse = JsonSerializer.Deserialize<OrderStatusResponse>(reconfirmResponse, jsonOption);
-            if (dataResponse is not null && dataResponse.isSuccessful)
+            var reconfirmResponse = ApiService.VerifyPurchaseStatus(_lastPaymentRef);
+            if (reconfirmResponse == null) continue;
+
+            if (reconfirmResponse.isSuccessful)
             {
                 Console.WriteLine("Order Complete");
+                break;
+            }
+            else if (reconfirmResponse.Staus == TransactionStatus.Failed)
+            {
+                Console.WriteLine("Order Failed");
                 break;
             }
             else
@@ -172,34 +280,48 @@ public class Program
                 // back off and retry
                 Task.Delay(5000).Wait();
             }
-        } while (retryCount-- > 0);
+        } while (--retryCount > 0);
 
         if (retryCount == 0)
         {
-            Console.WriteLine("Unable to Confirm transaction");
+            Console.WriteLine($"\nUnable to Confirm transaction at this time. Please check back later. RefId: {_lastPaymentRef}");
         }
     }
 
     private static void ViewGoods()
     {
-        var response = _httpClient.GetStringAsync(Constants.ApiUrl + "goods").Result;
-        var result = JsonSerializer.Deserialize<List<ProductResponse>>(response, jsonOption);
-        _goods = result ?? [];
+        _goods = ApiService.GetGoods();
         if (_goods.Count == 0)
         {
-            Console.WriteLine("No Data to display");
+            Console.WriteLine("\nNo Data to display");
+            return;
         }
 
+        Console.WriteLine("\nGoods List: ");
         foreach (var item in _goods)
         {
-            Console.WriteLine($"ID: {item.Id} | Name: {item.Name} | Price: {item.Price} | Stock: {item.Quantity}");
+            Console.WriteLine($"ID: {item.ProductId} | Name: {item.Name} | Price: {item.Price} | Stock: {item.Quantity}");
         }
     }
 }
 
 
-public static class Constants
+public class ApiService(HttpClient httpClient) : BaseApiClient(httpClient)
 {
-    public const string ApiUrl = "https://localhost:7222/api/";
-}
+    private const string BaseUrl = "https://localhost:7222/api/";
+    
+    public List<ProductInventoryResponse> GetGoods()
+    {
+        return GetAsync<List<ProductInventoryResponse>>($"{BaseUrl}inventory/getavailableproducts").Result;
+    }
 
+    public PurchaseResponse MakeOrder(PurchaseRequest request)
+    {
+        return PostAsync<PurchaseResponse>($"{BaseUrl}purchases/makeorder", request).Result;
+    }
+
+    public PurchaseOrderStatusResponse VerifyPurchaseStatus(string refId)
+    {
+        return GetAsync<PurchaseOrderStatusResponse>($"{BaseUrl}purchases/verifyorderstatus/{refId}").Result;
+    }
+}

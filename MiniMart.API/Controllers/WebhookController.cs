@@ -24,7 +24,10 @@ namespace MiniMart.API.Controllers
         public async Task<IActionResult> ReceiveWebhook([FromBody] CallbackRequest request)
         {
             var req = new WebhookRequest
-            { };
+            {
+                RefId = request.TraceId,
+                IsSuccess = request.TransactionResponseCode == Constants.Successful
+            };
 
             await _webhookService.ProcessWebhookTransaction(req);
 

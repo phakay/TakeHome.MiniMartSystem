@@ -4,6 +4,6 @@ namespace MiniMart.Application.Contracts
 {
     public interface IPurchaseOrderRepository : IRepository<PurchaseOrder>
     {
-        Task<PurchaseOrder?> GetByReferenceId(string referenceId);
+        Task<PurchaseOrder?> GetByReferenceIdAsync(string referenceId);
     }
 }

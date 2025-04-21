@@ -6,7 +6,7 @@ namespace MiniMart.Common
     public abstract class BaseApiClient
     {
         private readonly HttpClient _httpClient;
-        private static JsonSerializerOptions _jsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
+        private static JsonSerializerOptions _jsonSerializerOptions => new() { PropertyNameCaseInsensitive = true };
 
         public BaseApiClient(HttpClient httpClient)
         {
@@ -17,7 +17,8 @@ namespace MiniMart.Common
         {
             var response = await _httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
-            return JsonSerializer.Deserialize<T>(await response.Content.ReadAsStringAsync(), _jsonSerializerOptions)!;
+            return JsonSerializer.Deserialize<T>(await response.Content.ReadAsStringAsync(), _jsonSerializerOptions) ?? 
+                throw new InvalidOperationException("Unable to Deserialize content");
         }
 
         protected async Task<T> PostAsync<T>(string url, object payload)
@@ -25,7 +26,8 @@ namespace MiniMart.Common
             var jsonContent = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync(url, jsonContent);
             response.EnsureSuccessStatusCode();
-            return JsonSerializer.Deserialize<T>(await response.Content.ReadAsStringAsync(), _jsonSerializerOptions)!;
+            return JsonSerializer.Deserialize<T>(await response.Content.ReadAsStringAsync(), _jsonSerializerOptions) ?? 
+                throw new InvalidOperationException("Unable to Deserialize content");
         }
     }
 }

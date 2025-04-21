@@ -64,7 +64,7 @@ namespace MiniMart.Application.Models
         public string CurrencyCode { get; set; }
         public decimal Amount { get; set; }
         public string TrackingReference { get; set; }
-        public DateTime ExpiryTime { get; internal set; }
+        public DateTime ExpiryTime { get; set; }
     }
 
     public class PaymentRequest

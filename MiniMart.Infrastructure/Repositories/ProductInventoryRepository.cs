@@ -16,6 +16,6 @@ namespace MiniMart.Infrastructure.Repositories
             await _context.ProductInventories.Include(y => y.Product).AsNoTracking().ToArrayAsync();
 
         public async override Task<IEnumerable<ProductInventory>> GetManyAsync(Expression<Func<ProductInventory, bool>> condition) =>
-            await _context.ProductInventories.Include(y => y.Product).AsNoTracking().ToArrayAsync();
+            await _context.ProductInventories.Include(y => y.Product).Where(condition).AsNoTracking().ToArrayAsync();
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace MiniMart.Domain.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace MiniMart.Domain.Models
 {
     public class TransactionQueryLog : EntityBase
     {
@@ -9,5 +11,7 @@
         public DateTime LogDate { get; set; }
         public int RetryCount { get; set; }
         public decimal Amount { get; set; }
+        [Timestamp] // ensure optimistic concurrency control
+        public byte[] RowVersion { get; set; }
     }
 }

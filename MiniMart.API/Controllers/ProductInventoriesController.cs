@@ -37,7 +37,7 @@ namespace MiniMart.API.Controllers
             return Ok(response);
         }
 
-        [HttpGet("getallproducts")]
+        [HttpGet("getproducts")]
         public async Task<IActionResult> GetAll()
         {
             var response = _mapper.Map<IEnumerable<ProductInventoryResponse>>(await _productInvService.GetAllProductInventoriesAsync());

@@ -15,7 +15,7 @@ namespace MiniMart.Infrastructure.Repositories
         {
         }
 
-        public async Task<PurchaseOrder?> GetByReferenceId(string referenceId)
+        public async Task<PurchaseOrder?> GetByReferenceIdAsync(string referenceId)
         {
             return await _context.PurchaseOrders.FirstOrDefaultAsync(x => x.TransactionReference == referenceId);
         }
