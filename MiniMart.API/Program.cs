@@ -30,7 +30,7 @@ builder.Services.AddScoped<IProductInventoryService, ProductInventoryService>();
 builder.Services.AddScoped<IStockAlertService, StockAlertService>();
 builder.Services.AddScoped<IWebhookService, WebhookService>();
 
-builder.Services.AddScoped<IExternalGatewayPaymentService, PayWithTransferService>();
+builder.Services.AddScoped<IExternalGatewayPaymentService, FakePayWithTransferService>();
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddHostedService<InventoryStockLevelMonitorService>();
 builder.Services.AddHostedService<StockReconcilationService>();

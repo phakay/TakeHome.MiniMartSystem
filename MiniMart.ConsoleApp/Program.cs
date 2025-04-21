@@ -140,9 +140,10 @@ public class Program
     
     private static void PurchaseGoods()
     {
+        _goods = ApiService.GetGoods();
         if (_goods.Count == 0)
         {
-            Console.WriteLine("No Available goods to purchase at the moment. Try selecting option 1 to View the available goods");
+            Console.WriteLine("No Available goods to purchase at the moment.");
             return;
         }
 
@@ -154,8 +155,7 @@ public class Program
         var orderItems = new List<PurchaseItem>();
         Console.WriteLine("\nBegin Selecting an item from the list");
 
-        bool shouldAddMoreItems = true;
-        while (shouldAddMoreItems)
+        while (true)
         {
             var itemIdInput = InputProcessor("\nEnter Item ID", i =>
             {
@@ -167,7 +167,7 @@ public class Program
                 return (true, i);
             });
 
-            if (itemIdInput.isBreakOut) return;
+            if (itemIdInput.isBreakOut) break;
             var itemId = int.Parse(itemIdInput.result);
 
             var itemQtyInput = InputProcessor("\nEnter Quantity", i =>
@@ -182,7 +182,7 @@ public class Program
                 goods[itemId].Quantity -= qty;
                 return (true, i);
             });
-            if (itemQtyInput.isBreakOut) return;
+            if (itemQtyInput.isBreakOut) break;
             var qty = int.Parse(itemQtyInput.result);
 
             orderItems.Add(new PurchaseItem { ProductId = itemId, Quantity = qty });
@@ -199,11 +199,8 @@ public class Program
 
                 return (true, null);
             });
-            if (toContinueInput.isBreakOut) return;
-            var toContinue = toContinueInput.result.ToLower();
 
-            if (toContinue == "yes") shouldAddMoreItems = true;
-            if (toContinue == "no") shouldAddMoreItems = false;
+            if (toContinueInput.isBreakOut || string.Equals(toContinueInput.result, "no", StringComparison.OrdinalIgnoreCase)) break;
         }
         
         if (orderItems.Count == 0)
