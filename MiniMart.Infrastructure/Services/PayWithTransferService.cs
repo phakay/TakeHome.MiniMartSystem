@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+﻿using Microsoft.Extensions.Options;
 using MiniMart.Application.Contracts;
 using MiniMart.Application.Models;
 
@@ -7,13 +7,12 @@ namespace MiniMart.Infrastructure.Services
     public class PayWithTransferService : IExternalGatewayPaymentService
     {
         private readonly BankLinkService _apiService;
-        private string MerchantId = "Chuks12";
-        private string TerminalId = "Chuks123";
-        private string AccountName = "John Black";
+        private readonly BankLinkServiceConfig _config;
 
-        public PayWithTransferService(BankLinkService apiService)
+        public PayWithTransferService(BankLinkService apiService, IOptions<BankLinkServiceConfig> serviceConfig)
         {
             _apiService = apiService;
+            _config = serviceConfig.Value;
         }
 
         public async Task<PaymentResponse> ProcessPaymentAsync(PaymentRequest paymentRequest)
@@ -22,14 +21,14 @@ namespace MiniMart.Infrastructure.Services
             {
                 RequestHeader = new InvokePaymentRequest.Requestheader
                 {
-                    MerchantId = MerchantId,
-                    TerminalId = TerminalId,
+                    MerchantId = _config.MerchantId,
+                    TerminalId = _config.TerminalId,
                     TraceId = Utility.GenerateTraceId()
                 },
 
                 Amount = paymentRequest.Amount,
                 Description = $"Pay with transfer request for '{paymentRequest.CustomerId}'",
-                AccountName = AccountName
+                AccountName = _config.AccountName
             };
 
             var responsePayload = await _apiService.InvokePaymentAsync(requestPayload);
@@ -73,8 +72,8 @@ namespace MiniMart.Infrastructure.Services
             {
                 RequestHeader = new TransactionQueryRequest.Requestheader
                 {
-                    MerchantId = MerchantId,
-                    TerminalId = TerminalId,
+                    MerchantId = _config.MerchantId,
+                    TerminalId = _config.TerminalId,
                     TraceId = request.TransactionId
                 }
             };

@@ -28,7 +28,7 @@ namespace MiniMart.API.Controllers
         {
             var response = await _purchaseOrderService.ProcessPurchaseOrderAsync(request);
             if (response.ResponseCode == ServiceCodes.Success)
-             return CreateCustomResult(HttpStatusCode.OK, response);
+             return CreateCustomResult(HttpStatusCode.OK, response.Data);
             return CreateCustomResult(HttpStatusCode.BadRequest, $"{response.ResponseCode}-{response.ErrorMessage}");
         }
 

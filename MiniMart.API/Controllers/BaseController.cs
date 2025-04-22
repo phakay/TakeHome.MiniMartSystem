@@ -6,7 +6,7 @@ namespace MiniMart.API.Controllers;
 
 public abstract class BaseController : ControllerBase
 {
-    protected static ObjectResult CreateCustomResult<T>(HttpStatusCode statusCode, T result, string errorMessage = "") where T : class
+    protected static ObjectResult CreateCustomResult<T>(HttpStatusCode statusCode, T? result, string errorMessage = "") where T : class
     {
         var response = new ApiResponse<T>
         {

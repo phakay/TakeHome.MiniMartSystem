@@ -229,9 +229,8 @@ public class Program
             return (true, null);
         });
 
-        var toSendOrder = toSendOrderInput.result.ToLower();
-        if (toSendOrder == "no") return;
-
+        if (toSendOrderInput.isBreakOut || string.Equals(toSendOrderInput.result, "no", StringComparison.OrdinalIgnoreCase)) return;
+  
         // call purchase endpoint
         var orderData = new PurchaseRequest { CustomerId = userId, LineItems = orderItems, TotalAmount = totalAmount };
         var result = ApiService.MakeOrder(orderData);

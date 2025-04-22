@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using MiniMart.API.ActionFilters;
 using MiniMart.API.Mappings;
 using MiniMart.API.Middlewares;
 using MiniMart.Application.Contracts;
+using MiniMart.Application.Models;
 using MiniMart.Application.Services;
 using MiniMart.Infrastructure;
 using MiniMart.Infrastructure.Repositories;
@@ -17,8 +19,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-//builder.Services.AddDbContext<ApplicationDbContext>(opt => opt.UseSqlite("Data Source=mini-mart-database.db;"));
-builder.Services.AddDbContext<ApplicationDbContext>(opt => opt.UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=mini-mart;trusted_connection=True"));
+builder.Services.AddSingleton<WebhookActionFilter>();
+
+builder.Services.AddDbContext<ApplicationDbContext>(opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("Database")));
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IPurchaseOrderRepository, PurchaseOrderRepository>();
 builder.Services.AddScoped<IProductInventoryRepository, ProductInventoryRepository>();
@@ -32,14 +35,15 @@ builder.Services.AddScoped<IProductInventoryService, ProductInventoryService>();
 builder.Services.AddScoped<IStockAlertService, StockAlertService>();
 builder.Services.AddScoped<IWebhookService, WebhookService>();
 
-builder.Services.AddScoped<IExternalGatewayPaymentService, FakePayWithTransferService>();
+builder.Services.AddScoped<IExternalGatewayPaymentService, PayWithTransferService>();
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddHostedService<InventoryStockLevelMonitorService>();
 builder.Services.AddHostedService<StockReconcilationService>();
 builder.Services.AddHostedService<TransactionQueryProcessorService>();
 
-builder.Services.AddHttpClient<BankLinkService>(conf => conf.DefaultRequestHeaders.Add("Authorization", "Bearer eyJhbGciOiJodHRwOi8vd3d3LnczLm9yZy8yMDAxLzA0L3htbGRzaWctbW9yZSNobWFjLXNoYTUxMiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3MTNhZjkyNi1mY2JhLTRlNTYtOGU3My1lM2U5MDEzNDA5YzgiLCJNZXJjaGFudElkIjoiQ2h1a3MxMiIsImV4cCI6MTc3NjM5NDM2MywiaXNzIjoiaHR0cHM6Ly9jb3JhbHBheS5jb20iLCJhdWQiOiJodHRwczovL2NvcmFscGF5LmNvbSJ9.2vh4LBfC5-e5d6TZ3UOtcTwdjTI3l8QzqLEvMeo0J0Jz3Nb4OWwAIHiO8YeTiG49Knob1pmJuY_Gl7fy1VSNvQ"));
+builder.Services.Configure<BankLinkServiceConfig>(builder.Configuration.GetSection("BankLinkServiceConfig"));
 
+builder.Services.AddHttpClient<BankLinkService>(conf => conf.DefaultRequestHeaders.Add("Authorization", builder.Configuration.GetSection("BankLinkServiceConfig:ApiToken").Value));
 
 var app = builder.Build();
 

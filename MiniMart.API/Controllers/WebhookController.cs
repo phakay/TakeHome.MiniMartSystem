@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using MiniMart.API.ActionFilters;
 using MiniMart.Application.Contracts;
 using MiniMart.Application.Models;
@@ -13,15 +14,17 @@ namespace MiniMart.API.Controllers
     {
         private readonly ILogger<WebhookController> _logger;
         private readonly IWebhookService _webhookService;
+        private readonly BankLinkServiceConfig _serviceConfig;
 
-        public WebhookController(ILogger<WebhookController> logger, IWebhookService webhookService)
+        public WebhookController(ILogger<WebhookController> logger, IWebhookService webhookService, IOptions<BankLinkServiceConfig> serviceConfig)
         {
             _logger = logger;
             _webhookService = webhookService;
+            _serviceConfig = serviceConfig.Value;
         }
 
+        [ServiceFilter(typeof(WebhookActionFilter))]
         [HttpPost]
-        [WebhookActionFilter]
         [Consumes("application/json")]
         public async Task<IActionResult> ReceiveWebhook([FromBody] CallbackRequest request)
         {
