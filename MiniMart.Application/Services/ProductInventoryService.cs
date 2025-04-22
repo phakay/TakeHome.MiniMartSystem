@@ -1,4 +1,5 @@
 ﻿using MiniMart.Application.Contracts;
+using MiniMart.Application.Models;
 using MiniMart.Domain.Models;
 
 namespace MiniMart.Application.Services
@@ -18,10 +19,10 @@ namespace MiniMart.Application.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task AddQuantityToInventoryAsync(int productId, int quantity)
+        public async Task<ServiceResponse> AddQuantityToInventoryAsync(int productId, int quantity)
         {
             if (!await _productRepository.ExistsAsync(x => x.Id == productId))
-                throw new ApplicationException("Product with id " + productId + " does not exist");
+                return ServiceResponse.Failure(ServiceCodes.NotFound, "Product with id " + productId + " does not exist");
 
             var productInv = await _productInvRepository.GetByProductIdAsync(productId);
             if (productInv is null)
@@ -35,18 +36,19 @@ namespace MiniMart.Application.Services
 
                 await _productInvRepository.AddAsync(newProductInv);
                 await _unitOfWork.SaveChangesAsync();
-                return;
+                return ServiceResponse.Success();
             }
 
             productInv.Quantity += quantity;
             productInv.DateUpdated = DateTime.Now;
             await _unitOfWork.SaveChangesAsync();
+            return ServiceResponse.Success();
         }
 
-        public async Task RemoveQuantityFromInventory(int productId, int quantity)
+        public async Task<ServiceResponse> RemoveQuantityFromInventory(int productId, int quantity)
         {
             if (!await _productRepository.ExistsAsync(x => x.Id == productId))
-                throw new ApplicationException("Product with id " + productId + " does not exist");
+                return ServiceResponse.Failure(ServiceCodes.NotFound, "Product with id " + productId + " does not exist");
 
             var productInv = await _productInvRepository.GetByProductIdAsync(productId);
             if (productInv is null)
@@ -60,15 +62,15 @@ namespace MiniMart.Application.Services
 
                 await _productInvRepository.AddAsync(newProductInv);
                 await _unitOfWork.SaveChangesAsync();
-                return;
+                return ServiceResponse.Success();
             }
 
-            // TODO: should handle concurrency concerns here
-            if (productInv.Quantity -  quantity < 0) throw new ApplicationException("Insufficient inventory stock");
+            if (productInv.Quantity -  quantity < 0) ServiceResponse.Failure(ServiceCodes.OperationError, "Insufficient inventory stock");
             productInv.Quantity -= quantity;
             productInv.DateUpdated = DateTime.Now;
 
             await _unitOfWork.SaveChangesAsync();
+            return ServiceResponse.Success();
         }
 
         public async Task<IEnumerable<ProductInventory>> GetAvailableProductsInStockAsync() => await _productInvRepository.GetManyAsync(x => x.Quantity > 0);

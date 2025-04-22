@@ -2,6 +2,41 @@
 
 namespace MiniMart.Application.Models
 {
+    public static class ServiceCodes
+    {
+        public const string Success = "00";
+        public const string NotFound = "01";
+        public const string OperationError = "02";
+        public const string PaymentGatewayError = "03";
+        public const string InsufficientAmountStock = "04";
+        public const string TotalAmountError = "05";
+    }
+
+    public class ServiceResponse<T> : ServiceResponse
+    {
+        public T? Data { get; set; }
+
+        public static ServiceResponse<T> Success(T data)
+        {
+            return new ServiceResponse<T>() { ResponseCode = ServiceCodes.Success, Data = data };
+        }
+
+        public static ServiceResponse<T> Failure(string responseCode, string errorMessage, T? _ = default)
+        {
+            return new ServiceResponse<T>() { ResponseCode = responseCode, ErrorMessage = errorMessage };
+        }
+    }
+
+    public class ServiceResponse
+    {
+        public required string ResponseCode { get; set; }
+        public string? ErrorMessage { get; set; }
+
+        public static ServiceResponse Success() => new ServiceResponse { ResponseCode = ServiceCodes.Success };
+
+        public static ServiceResponse Failure(string responseCode, string errorMessage) => new ServiceResponse { ResponseCode = responseCode, ErrorMessage = errorMessage };
+    }
+
     public class ApiResponse<T>
     {
         public bool IsSuccessful { get; set; }

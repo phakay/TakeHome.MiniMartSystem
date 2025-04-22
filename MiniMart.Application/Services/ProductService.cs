@@ -1,4 +1,5 @@
 ﻿using MiniMart.Application.Contracts;
+using MiniMart.Application.Models;
 using MiniMart.Domain.Models;
 
 namespace MiniMart.Application.Services
@@ -42,13 +43,14 @@ namespace MiniMart.Application.Services
 
         public async Task<bool> DoesProductNameExistsAsync(string name) => await _repository.ExistsAsync(x => x.Name == name);
 
-        public async Task RemoveProductAsync(int id) 
+        public async Task<ServiceResponse> RemoveProductAsync(int id) 
         {
             if ((await _inventoryRepository.GetByProductIdAsync(id))?.Quantity > 0)
-                throw new InvalidOperationException($"Cannot Delete Product ID {id} because it is still in stock");
+                ServiceResponse.Failure(ServiceCodes.OperationError, $"Cannot Delete Product ID {id} because it is still in stock");
 
             await _repository.DeleteAsync(id); 
             await _unitOfWork.SaveChangesAsync();
+            return ServiceResponse.Success();
         }
     }
 }

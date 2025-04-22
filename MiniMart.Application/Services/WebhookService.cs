@@ -11,7 +11,7 @@ namespace MiniMart.Application.Services
             _purchaseOrderService = purchaseOrderService;
         }
 
-        public async Task ProcessWebhookTransaction(WebhookRequest request)
+        public async Task ProcessWebhookTransactionAsync(WebhookRequest request)
         {
             await _purchaseOrderService.ProcessOrderTransactionStatus(request.RefId, request.IsSuccess);
         }

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using MiniMart.API.Mappings;
+using MiniMart.API.Middlewares;
 using MiniMart.Application.Contracts;
 using MiniMart.Application.Services;
 using MiniMart.Infrastructure;
@@ -42,7 +43,7 @@ builder.Services.AddHttpClient<BankLinkService>(conf => conf.DefaultRequestHeade
 
 var app = builder.Build();
 
-app.UseMiddleware<ExceptionHandlerMiddleware>();
+app.UseMiddleware<CustomExceptionHandlerMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

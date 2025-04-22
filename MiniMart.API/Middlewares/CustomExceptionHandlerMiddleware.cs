@@ -2,12 +2,12 @@ using MiniMart.Application.Models;
 
 namespace MiniMart.API.Middlewares;
 
-public class ExceptionHandlerMiddleware
+public class CustomExceptionHandlerMiddleware
 {
     private readonly RequestDelegate _next;
-    private readonly ILogger<ExceptionHandlerMiddleware> _logger;
+    private readonly ILogger<CustomExceptionHandlerMiddleware> _logger;
 
-    public ExceptionHandlerMiddleware(RequestDelegate next, ILogger<ExceptionHandlerMiddleware> logger)
+    public CustomExceptionHandlerMiddleware(RequestDelegate next, ILogger<CustomExceptionHandlerMiddleware> logger)
     {
         _next = next;
         _logger = logger;

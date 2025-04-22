@@ -4,6 +4,6 @@ namespace MiniMart.Application.Contracts
 {
     public interface IWebhookService
     {
-        public Task ProcessWebhookTransaction(WebhookRequest request);
+        public Task ProcessWebhookTransactionAsync(WebhookRequest request);
     }
 }

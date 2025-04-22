@@ -47,21 +47,21 @@ namespace MiniMart.API.Controllers
         [HttpPost("addinventory")]
         public async Task<IActionResult> AddToInventory(ProductInventoryRequest request)
         {
-            if (!await _productService.DoesProductIdExistsAsync(request.ProductId))
-                return CreateCustomResult(HttpStatusCode.NotFound, "The product Id could not be found");
+            var response = await _productInvService.AddQuantityToInventoryAsync(request.ProductId, request.Quantity);
 
-            await _productInvService.AddQuantityToInventoryAsync(request.ProductId, request.Quantity);
-            return CreateCustomResult(HttpStatusCode.OK);
+            if (response.ResponseCode == ServiceCodes.Success)
+                return CreateCustomResult(HttpStatusCode.OK, response);
+            return CreateCustomResult(HttpStatusCode.BadRequest, $"{response.ResponseCode}-{response.ErrorMessage}");
         }
 
         [HttpPost("removeinventory")]
         public async Task<IActionResult> RemoveFromInventory(ProductInventoryRequest request)
         {
-            if (!await _productService.DoesProductIdExistsAsync(request.ProductId))
-                return CreateCustomResult(HttpStatusCode.NotFound, "The product Id could not be found");
+            var response = await _productInvService.RemoveQuantityFromInventory(request.ProductId, request.Quantity);
 
-            await _productInvService.RemoveQuantityFromInventory(request.ProductId, request.Quantity);
-            return Ok();
+            if (response.ResponseCode == ServiceCodes.Success)
+                return CreateCustomResult(HttpStatusCode.OK, response);
+            return CreateCustomResult(HttpStatusCode.BadRequest, $"{response.ResponseCode}-{response.ErrorMessage}");
         }
     }
 }

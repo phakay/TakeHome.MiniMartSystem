@@ -1,4 +1,5 @@
-﻿using MiniMart.Domain.Models;
+﻿using MiniMart.Application.Models;
+using MiniMart.Domain.Models;
 
 namespace MiniMart.Application.Contracts
 {
@@ -10,6 +11,6 @@ namespace MiniMart.Application.Contracts
         Task<IEnumerable<Product>> GetProductsAsync();
         Task AddProductAsync(Product item);
         Task UpdateProductAsync(Product item);
-        Task RemoveProductAsync(int id);
+        Task<ServiceResponse> RemoveProductAsync(int id);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using MiniMart.Application.Models;
 using MiniMart.Domain.Models;
 
 namespace MiniMart.Application.Contracts
@@ -8,7 +9,7 @@ namespace MiniMart.Application.Contracts
         Task<ProductInventory?> GetProductInventoryByProductIdAsync(int productId);
         Task<IEnumerable<ProductInventory>> GetAllProductInventoriesAsync();
         Task<IEnumerable<ProductInventory>> GetAvailableProductsInStockAsync();
-        Task AddQuantityToInventoryAsync(int productId, int quantity);
-        Task RemoveQuantityFromInventory(int productId, int quantity);
+        Task<ServiceResponse> AddQuantityToInventoryAsync(int productId, int quantity);
+        Task<ServiceResponse> RemoveQuantityFromInventory(int productId, int quantity);
     }
 }

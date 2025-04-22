@@ -27,7 +27,7 @@ namespace MiniMart.Application.Services
             _tsqLogRepository = tsqLogRepository;
         }
 
-        public async Task<PurchaseResponse> ProcessPurchaseOrderAsync(PurchaseRequest request)
+        public async Task<ServiceResponse<PurchaseResponse>> ProcessPurchaseOrderAsync(PurchaseRequest request)
         {
             MergeLineItems(request);
 
@@ -39,12 +39,12 @@ namespace MiniMart.Application.Services
                 var productInv = await _productInvRepository.GetByProductIdAsync(lineItem.ProductId);
                 if (productInv is null)
                 {
-                    return new PurchaseResponse { IsSuccessful = false, Message = $"Product Id: {lineItem.ProductId} could not be found" };
+                    return ServiceResponse<PurchaseResponse>.Failure(ServiceCodes.NotFound, $"Product Id: {lineItem.ProductId} could not be found");
                 }
 
                 if (productInv.Quantity == 0 || productInv.Quantity < lineItem.Quantity)
                 {
-                    return new PurchaseResponse { IsSuccessful = false, Message = $"Insufficient stock for Product Id: {productInv.ProductId}" };
+                    return ServiceResponse<PurchaseResponse>.Failure(ServiceCodes.InsufficientAmountStock, $"Insufficient stock for Product Id: {productInv.ProductId}");
                 }
 
                 totalAmount += lineItem.Quantity * productInv.Product.Price;
@@ -52,10 +52,10 @@ namespace MiniMart.Application.Services
             }
 
             if (totalAmount == 0)
-                return new PurchaseResponse { IsSuccessful = false, Message = $"Total amount cannot be zero" };
+                return ServiceResponse<PurchaseResponse>.Failure(ServiceCodes.TotalAmountError, $"Total amount cannot be zero");
 
             if (totalAmount != request.TotalAmount)
-                return new PurchaseResponse { IsSuccessful = false, Message = $"Total amount calcuated must match total amount in request. Amount: {totalAmount}, request amount: {request.TotalAmount}" };
+                return ServiceResponse<PurchaseResponse>.Failure(ServiceCodes.TotalAmountError, $"Total amount calcuated must match total amount in request. Amount: {totalAmount}, request amount: {request.TotalAmount}");
 
             var paymentRequest = new PaymentRequest
             {
@@ -67,13 +67,13 @@ namespace MiniMart.Application.Services
             var paymentResponse = await _paymentService.ProcessPaymentAsync(paymentRequest);
 
             if (!paymentResponse.IsSuccessful)
-                return new PurchaseResponse { IsSuccessful = false, Message = paymentResponse.ErrorMessage };
+                return ServiceResponse<PurchaseResponse>.Failure(ServiceCodes.PaymentGatewayError, paymentResponse.ErrorMessage);
 
             if (paymentResponse.TrackingReference is null)
-                return new PurchaseResponse { IsSuccessful = false, Message = "Something went wrong. pls try again" };
+                return ServiceResponse<PurchaseResponse>.Failure(ServiceCodes.PaymentGatewayError, "Something went wrong. pls try again");
 
             if (paymentRequest.Amount != paymentResponse.Amount)
-                return new PurchaseResponse { IsSuccessful = false, Message = "Amount mismatch error" };
+                return ServiceResponse<PurchaseResponse>.Failure(ServiceCodes.TotalAmountError, "Amount mismatch error");
 
             var purchaseOrder = new PurchaseOrder
             {
@@ -85,7 +85,7 @@ namespace MiniMart.Application.Services
                 OrderData = JsonSerializer.Serialize(request)
             };
 
-            quantityToDeductTracker.ForEach(x => x.Item1.Quantity -= x.Item2);
+            quantityToDeductTracker.ForEach(x => x.prodInv.Quantity -= x.qty);
 
             var trxQuery = new TransactionQueryLog
             {
@@ -111,7 +111,7 @@ namespace MiniMart.Application.Services
                 ExpiryTime = paymentResponse.ExpiryTime
             };
 
-            return response;
+            return ServiceResponse<PurchaseResponse>.Success(response);
         }
 
         public async Task<IEnumerable<PurchaseOrder>> GetPurchaseOrdersAsync()
@@ -132,22 +132,13 @@ namespace MiniMart.Application.Services
             };
         }
 
-        private static void MergeLineItems(PurchaseRequest request)
-        {
-
-            request.LineItems = request.LineItems
-                            .GroupBy(x => x.ProductId)
-                            .Select(g => new PurchaseItem { ProductId = g.Key, Quantity = g.Sum(x => x.Quantity) })
-                            .ToList();
-        }
-
-        public async Task ProcessOrderTransactionStatus(string refId, bool isSuccessful)
+        public async Task<ServiceResponse> ProcessOrderTransactionStatus(string refId, bool isSuccessful)
         {
             var order = await _purchaseOrderRepository.GetByReferenceIdAsync(refId);
 
-            if (order is null) throw new ApplicationException($"Order with refId '{refId}' could not be found");
+            if (order is null) return ServiceResponse.Failure(ServiceCodes.NotFound, $"Order with refId '{refId}' could not be found");
 
-            if (order.OrderStatus != PurchaseStatus.Pending) return;
+            if (order.OrderStatus != PurchaseStatus.Pending) return ServiceResponse.Success();
 
             order.OrderStatus = isSuccessful ? PurchaseStatus.Success : PurchaseStatus.Failed;
 
@@ -159,6 +150,16 @@ namespace MiniMart.Application.Services
             }
 
             await _unitOfWork.SaveChangesAsync();
+            return ServiceResponse.Success();
+        }
+
+        private static void MergeLineItems(PurchaseRequest request)
+        {
+
+            request.LineItems = request.LineItems
+                            .GroupBy(x => x.ProductId)
+                            .Select(g => new PurchaseItem { ProductId = g.Key, Quantity = g.Sum(x => x.Quantity) })
+                            .ToList();
         }
     }
 }

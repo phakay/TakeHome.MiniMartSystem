@@ -27,7 +27,9 @@ namespace MiniMart.API.Controllers
         public async Task<IActionResult> Purchase([FromBody] PurchaseRequest request)
         {
             var response = await _purchaseOrderService.ProcessPurchaseOrderAsync(request);
-            return CreateCustomResult(HttpStatusCode.OK, response);
+            if (response.ResponseCode == ServiceCodes.Success)
+             return CreateCustomResult(HttpStatusCode.OK, response);
+            return CreateCustomResult(HttpStatusCode.BadRequest, $"{response.ResponseCode}-{response.ErrorMessage}");
         }
 
         [HttpGet("getorders")]
